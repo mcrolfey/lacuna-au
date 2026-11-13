@@ -1,0 +1,35 @@
+# LM Studio: start the local server (Developer tab -> Start Server)
+lmstudio:
+  base_url: http://localhost:1234/v1
+  api_key: lm-studio            # any string works
+  chat_model: qwen3-8b          # must match the model identifier shown in LM Studio
+  embed_model: text-embedding-nomic-embed-text-v1.5
+  temperature: 0.2
+  max_tokens: 2048
+  # Optional stronger model used only by the verifier (e.g. a 14B with partial GPU offload).
+  verifier_model: null
+
+corpus:
+  # Open Australian Legal Corpus on Hugging Face
+  dataset: isaacus/open-australian-legal-corpus
+  jurisdictions: [commonwealth, new_south_wales]
+  types: [primary_legislation, secondary_legislation, decision]
+
+topic:
+  name: residential_tenancy
+  # A document is kept if its text contains at least `min_hits` of these keywords.
+  keywords: [tenant, tenancy, landlord, lease, rent, bond, eviction, residential premises]
+  min_hits: 3
+  max_docs: 400
+
+chunking:
+  chunk_chars: 3000
+  overlap_chars: 300
+
+paths:
+  data_dir: data
+  report_dir: reports
+
+analysis:
+  retrieve_k: 8          # chunks pulled per question
+  questions_per_topic: 12

@@ -1,0 +1,38 @@
+import json
+from datetime import date
+from pathlib import Path
+
+ORDER = {"high": 0, "medium": 1, "low": 2}
+TITLES = {"conflict": "Conflicts between levels of law",
+          "loophole": "Areas open to gaming",
+          "precedent": "Problems exposed by case law"}
+
+
+def write_report(cfg: dict, findings: list[dict]) -> Path:
+    topic = cfg["topic"]["name"]
+    out_dir = Path(cfg["paths"]["report_dir"])
+    clean = [{k: v for k, v in f.items() if k != "_context"} for f in findings]
+    (out_dir / f"{topic}_findings.json").write_text(json.dumps(clean, indent=2))
+
+    kept = [f for f in clean if f.get("verdict") != "rejected"]
+    lines = [f"# {topic.replace('_', ' ').title()}: findings",
+             f"_Generated {date.today()} by local models. Not legal advice; every item "
+             "needs checking by a person against the current law._",
+             f"\n{len(kept)} findings kept, {len(clean) - len(kept)} rejected by the verifier.\n"]
+    for agent, heading in TITLES.items():
+        group = sorted((f for f in kept if f["agent"] == agent),
+                       key=lambda f: ORDER.get(f.get("severity"), 3))
+        lines.append(f"## {heading} ({len(group)})\n")
+        for f in group:
+            lines.append(f"### {f['title']}")
+            lines.append(f"**Severity:** {f.get('severity')} · **Confidence:** "
+                         f"{f.get('confidence')} · **Verifier:** {f['verdict']}\n")
+            lines.append(f"{f.get('summary', '')}\n")
+            if f.get("provisions"):
+                lines.append("**Provisions:** " + "; ".join(map(str, f["provisions"])))
+            for s in f.get("sources", []):
+                lines.append(f"- [{s['citation']}]({s['url']}) ({s['jurisdiction']})")
+            lines.append(f"\n> Verifier: {f['verdict_reason']}\n")
+    path = out_dir / f"{topic}_report.md"
+    path.write_text("\n".join(lines))
+    return path
