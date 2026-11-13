@@ -1,5 +1,6 @@
 """Chunk documents, embed them with LM Studio and store in a local Chroma DB."""
 import json
+import re
 from pathlib import Path
 
 import chromadb
@@ -25,7 +26,10 @@ def chunk(text: str, size: int, overlap: int) -> list[str]:
 
 def collection(cfg: dict):
     client = chromadb.PersistentClient(path=str(Path(cfg["paths"]["data_dir"]) / "chroma"))
-    return client.get_or_create_collection(cfg["topic"]["name"], metadata={"hnsw:space": "cosine"})
+    # Chroma names allow only letters, digits, . _ - (3-512 chars), so "parking rules" -> "parking_rules".
+    name = re.sub(r"[^A-Za-z0-9._-]+", "_", cfg["topic"]["name"]).strip("._-")
+    name = (name + "_topic")[:512] if len(name) < 3 else name[:512]
+    return client.get_or_create_collection(name, metadata={"hnsw:space": "cosine"})
 
 
 def build_index(cfg: dict, llm: LMStudio, batch: int = 32) -> None:
@@ -40,7 +44,7 @@ def build_index(cfg: dict, llm: LMStudio, batch: int = 32) -> None:
                        embeddings=llm.embed(docs))
             ids.clear(); docs.clear(); metas.clear()
 
-    for line in tqdm(src.open(), desc="indexing"):
+    for line in tqdm(src.open(encoding="utf-8"), desc="indexing"):
         d = json.loads(line)
         for i, piece in enumerate(chunk(d["text"], ck["chunk_chars"], ck["overlap_chars"])):
             ids.append(f"{d['id']}::{i}")
