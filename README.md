@@ -52,6 +52,7 @@ python -m lacuna.cli ingest    # download and filter the corpus (first run is a 
 python -m lacuna.cli refilter  # optional: re-apply topic filter to downloaded docs (no re-download)
 python -m lacuna.cli index     # chunk and embed
 python -m lacuna.cli analyse   # agents + verifier -> reports/
+python -m lacuna.cli report    # rebuild the .md and .pdf from saved findings
 # or all three steps:
 python -m lacuna.cli all
 ```

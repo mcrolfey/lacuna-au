@@ -2,6 +2,8 @@ import json
 from datetime import date
 from pathlib import Path
 
+from .pdf import write_pdf
+
 ORDER = {"high": 0, "medium": 1, "low": 2}
 TITLES = {"conflict": "Conflicts between levels of law",
           "loophole": "Areas open to gaming",
@@ -12,7 +14,7 @@ def write_report(cfg: dict, findings: list[dict]) -> Path:
     topic = cfg["topic"]["name"]
     out_dir = Path(cfg["paths"]["report_dir"])
     clean = [{k: v for k, v in f.items() if k != "_context"} for f in findings]
-    (out_dir / f"{topic}_findings.json").write_text(json.dumps(clean, indent=2))
+    (out_dir / f"{topic}_findings.json").write_text(json.dumps(clean, indent=2), encoding="utf-8")
 
     kept = [f for f in clean if f.get("verdict") != "rejected"]
     lines = [f"# {topic.replace('_', ' ').title()}: findings",
@@ -34,5 +36,12 @@ def write_report(cfg: dict, findings: list[dict]) -> Path:
                 lines.append(f"- [{s['citation']}]({s['url']}) ({s['jurisdiction']})")
             lines.append(f"\n> Verifier: {f['verdict_reason']}\n")
     path = out_dir / f"{topic}_report.md"
-    path.write_text("\n".join(lines))
+    path.write_text("\n".join(lines), encoding="utf-8")
+    ranked = sorted(kept, key=lambda f: ORDER.get(f.get("severity"), 3))
+    try:
+        pdf = write_pdf(out_dir / f"{topic}_report.pdf", topic, ranked,
+                        len(clean) - len(kept), TITLES)
+        print("pdf:", pdf)
+    except Exception as e:  # never lose the analysis because of a PDF problem
+        print(f"PDF failed ({e}); markdown and JSON reports are still saved.")
     return path

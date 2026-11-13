@@ -1,4 +1,6 @@
 import argparse
+import json
+from pathlib import Path
 
 from .agents import AGENTS, plan_questions, run_agent, verify
 from .config import load_config
@@ -10,7 +12,7 @@ from .report import write_report
 
 def main():
     p = argparse.ArgumentParser(prog="lacuna")
-    p.add_argument("command", choices=["check", "ingest", "refilter", "index", "analyse", "all"])
+    p.add_argument("command", choices=["check", "ingest", "refilter", "index", "analyse", "report", "all"])
     p.add_argument("--config", default="config.yaml")
     p.add_argument("-q", "--question", action="append",
                    help="your own research question (repeatable); skips the planner")
@@ -18,6 +20,10 @@ def main():
     args = p.parse_args()
 
     cfg = load_config(args.config)
+    if args.command == "report":  # rebuild md + pdf from saved findings, no LLM needed
+        src = Path(cfg["paths"]["report_dir"]) / f"{cfg['topic']['name']}_findings.json"
+        print("report:", write_report(cfg, json.loads(src.read_text(encoding="utf-8"))))
+        return
     llm = LMStudio(cfg)
 
     if args.command == "check":
