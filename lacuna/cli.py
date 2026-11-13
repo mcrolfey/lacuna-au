@@ -3,14 +3,14 @@ import argparse
 from .agents import AGENTS, plan_questions, run_agent, verify
 from .config import load_config
 from .index import build_index
-from .ingest import ingest
+from .ingest import ingest, refilter
 from .llm import LMStudio
 from .report import write_report
 
 
 def main():
     p = argparse.ArgumentParser(prog="lacuna")
-    p.add_argument("command", choices=["check", "ingest", "index", "analyse", "all"])
+    p.add_argument("command", choices=["check", "ingest", "refilter", "index", "analyse", "all"])
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--agents", default=",".join(AGENTS), help="comma-separated subset")
     args = p.parse_args()
@@ -27,6 +27,8 @@ def main():
         return
     if args.command in ("ingest", "all"):
         ingest(cfg)
+    if args.command == "refilter":
+        refilter(cfg)
     if args.command in ("index", "all"):
         build_index(cfg, llm)
     if args.command in ("analyse", "all"):

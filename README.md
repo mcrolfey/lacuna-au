@@ -49,6 +49,7 @@ Open Australian Legal Corpus ──ingest──> topic documents (jsonl)
 
 ```bash
 python -m lacuna.cli ingest    # download and filter the corpus (first run is a multi-GB download)
+python -m lacuna.cli refilter  # optional: re-apply topic filter to downloaded docs (no re-download)
 python -m lacuna.cli index     # chunk and embed
 python -m lacuna.cli analyse   # agents + verifier -> reports/
 # or all three steps:
