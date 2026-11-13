@@ -58,6 +58,13 @@ python -m lacuna.cli all
 
 Run a single agent: `python -m lacuna.cli analyse --agents loophole`
 
+Ask your own questions instead of letting the planner choose (or list them under
+`analysis.questions` in `config.yaml`):
+
+```bash
+python -m lacuna.cli analyse -q "How can landlords avoid the no-grounds eviction rules?" -q "Does the NSW bond scheme conflict with Commonwealth law?"
+```
+
 ## Choosing a topic
 
 Edit the `topic` and `corpus.jurisdictions` sections of `config.yaml`. Jurisdiction values

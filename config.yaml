@@ -32,4 +32,9 @@ paths:
 
 analysis:
   retrieve_k: 8          # chunks pulled per question
-  questions_per_topic: 12
+  questions_per_topic: 12   # used only when no questions are given
+  # Your own questions. If this list is empty the planner writes them.
+  questions: []
+  # questions:
+  #   - Is the NSW rental bond scheme consistent with Commonwealth consumer law?
+  #   - How can landlords avoid the no-grounds eviction rules?

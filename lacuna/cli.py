@@ -12,6 +12,8 @@ def main():
     p = argparse.ArgumentParser(prog="lacuna")
     p.add_argument("command", choices=["check", "ingest", "refilter", "index", "analyse", "all"])
     p.add_argument("--config", default="config.yaml")
+    p.add_argument("-q", "--question", action="append",
+                   help="your own research question (repeatable); skips the planner")
     p.add_argument("--agents", default=",".join(AGENTS), help="comma-separated subset")
     args = p.parse_args()
 
@@ -32,11 +34,12 @@ def main():
     if args.command in ("index", "all"):
         build_index(cfg, llm)
     if args.command in ("analyse", "all"):
-        analyse(cfg, llm, args.agents.split(","))
+        analyse(cfg, llm, args.agents.split(","), args.question)
 
 
-def analyse(cfg: dict, llm: LMStudio, agents: list[str]) -> None:
-    questions = plan_questions(llm, cfg["topic"]["name"], cfg["analysis"]["questions_per_topic"])
+def analyse(cfg: dict, llm: LMStudio, agents: list[str], questions: list[str] | None = None) -> None:
+    questions = questions or cfg["analysis"].get("questions") or plan_questions(
+        llm, cfg["topic"]["name"], cfg["analysis"]["questions_per_topic"])
     findings = []
     for qi, q in enumerate(questions, 1):
         print(f"[{qi}/{len(questions)}] {q}")
