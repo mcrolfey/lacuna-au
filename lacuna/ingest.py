@@ -37,7 +37,10 @@ def _select(docs, cfg: dict, already_filtered: bool = False) -> list[dict]:
     """Keep the Constitution plus the `max_docs` highest-scoring topic documents."""
     c, t = cfg["corpus"], cfg["topic"]
     score = _matcher(t["keywords"])
-    best: list = []      # min-heap of (distinct, total, counter, record)
+    # Separate quotas so court decisions (the common law) are not crowded out by legislation.
+    n_dec = round(t["max_docs"] * t.get("decision_share", 0.5))
+    quota = {"decision": n_dec, "legislation": t["max_docs"] - n_dec}
+    heaps: dict[str, list] = {"decision": [], "legislation": []}  # min-heaps of (distinct, total, n, rec)
     constitution: list[dict] = []
     for n, doc in enumerate(docs):
         if doc.get("jurisdiction") not in c["jurisdictions"]:
@@ -53,12 +56,15 @@ def _select(docs, cfg: dict, already_filtered: bool = False) -> list[dict]:
         if distinct < t["min_hits"]:
             continue
         item = (distinct, total, n, doc if already_filtered else _record(doc, False))
-        if len(best) < t["max_docs"]:
-            heapq.heappush(best, item)
-        else:
-            heapq.heappushpop(best, item)
-    ranked = [r for *_, r in sorted(best, reverse=True)]
-    return constitution[:1] + ranked
+        kind = "decision" if doc.get("type") == "decision" else "legislation"
+        heap = heaps[kind]
+        if len(heap) < quota[kind]:
+            heapq.heappush(heap, item)
+        elif quota[kind]:
+            heapq.heappushpop(heap, item)
+    picked = {k: [r for *_, r in sorted(h, reverse=True)] for k, h in heaps.items()}
+    print(f"selected {len(picked['legislation'])} legislation + {len(picked['decision'])} decisions")
+    return constitution[:1] + picked["legislation"] + picked["decision"]
 
 
 def _write(records: list[dict], out: Path) -> None:

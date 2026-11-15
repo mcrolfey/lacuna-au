@@ -39,6 +39,19 @@ AGENTS = {
             "that defeat the apparent purpose of the law."),
         "filter": {"type": "decision"},
     },
+    "common_law": {
+        "role": BASE + (
+            "Analyse the common law (judge-made law) on this subject and how it interacts "
+            "with legislation. Identify: common law rules that statute has abrogated, "
+            "modified or codified incompletely; gaps where only the common law applies and "
+            "is uncertain; conflicting lines of authority between State courts or between "
+            "intermediate courts and the High Court; equitable doctrines or implied terms "
+            "that cut across the statutory scheme; and common law rules that can be "
+            "exploited to avoid a statutory obligation. State the principle and the case "
+            "it comes from for every claim."),
+        # Half court decisions (where the common law lives), half legislation to compare it with.
+        "filter": "mixed",
+    },
 }
 
 
@@ -47,13 +60,18 @@ def plan_questions(llm: LMStudio, topic: str, n: int) -> list[str]:
         "You design research agendas for Australian law reform.",
         f"Topic: {topic.replace('_', ' ')}.\nWrite {n} specific research questions that would "
         "reveal conflicts between Constitution, federal and state law, loopholes, or problems "
-        "revealed by case law. Return a JSON list of strings.")
+        "revealed by case law, or tensions between the common law and statute. Return a JSON list of strings.")
     return [q for q in (out or []) if isinstance(q, str)][:n] or [f"Problems with {topic} law"]
 
 
 def run_agent(cfg: dict, llm: LMStudio, name: str, question: str) -> list[dict]:
     spec = AGENTS[name]
-    chunks = retrieve(cfg, llm, question, cfg["analysis"]["retrieve_k"], spec["filter"])
+    k = cfg["analysis"]["retrieve_k"]
+    if spec["filter"] == "mixed":
+        chunks = (retrieve(cfg, llm, question, (k + 1) // 2, {"type": "decision"})
+                  + retrieve(cfg, llm, question, k // 2, {"type": {"$ne": "decision"}}))
+    else:
+        chunks = retrieve(cfg, llm, question, k, spec["filter"])
     if not chunks:
         return []
     sources = format_sources(chunks)

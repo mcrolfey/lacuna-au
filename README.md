@@ -7,6 +7,9 @@ State law and case law on one topic, then uses local AI agents to find:
 - **Loopholes**, meaning ways the law can be gamed or avoided
 - **Problems shown up by case law**, such as provisions read down, conflicting
   interpretations, or criticism from judges
+- **Common law vs statute**: judge-made rules that legislation overrides, codifies badly or
+  leaves uncertain, conflicting lines of cases between States, and doctrines that can be
+  used to avoid a statutory duty
 
 Every finding cites its sources and is checked by a sceptical **verifier** agent. Findings it
 can't back up are marked as rejected. The output is a starting point for research,
@@ -23,7 +26,7 @@ Open Australian Legal Corpus ──ingest──> topic documents (jsonl)
                                    ▼
                           Chroma vector index
                                    │
-   planner ─> questions ─> conflict / loophole / precedent agents ─> verifier
+   planner ─> questions ─> conflict / loophole / precedent / common_law agents ─> verifier
                                                                        ▼
                                                          reports/<topic>_report.md
 ```

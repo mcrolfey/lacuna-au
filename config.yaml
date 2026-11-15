@@ -21,6 +21,8 @@ topic:
   keywords: [tenant, tenancy, landlord, lease, rent, bond, eviction, residential premises]
   min_hits: 3
   max_docs: 400
+  # Fraction of max_docs reserved for court decisions (precedent + common law).
+  decision_share: 0.5
 
 chunking:
   chunk_chars: 3000
