@@ -16,14 +16,25 @@ class LMStudio:
         self.max_tokens = c.get("max_tokens", 2048)
 
     def chat(self, system: str, user: str, model: str | None = None) -> str:
-        resp = self.client.chat.completions.create(
-            model=model or self.chat_model,
-            messages=[{"role": "system", "content": system},
-                      {"role": "user", "content": user}],
-            temperature=self.temperature,
-            max_tokens=self.max_tokens,
-        )
-        text = resp.choices[0].message.content or ""
+        max_tokens = self.max_tokens
+        for attempt in range(2):
+            resp = self.client.chat.completions.create(
+                model=model or self.chat_model,
+                messages=[{"role": "system", "content": system},
+                          {"role": "user", "content": user}],
+                temperature=self.temperature,
+                max_tokens=max_tokens,
+            )
+            choice = resp.choices[0]
+            text = choice.message.content or ""
+            # Reasoning models can spend the whole budget thinking and never answer: retry once with more room.
+            if text.strip() or choice.finish_reason != "length":
+                break
+            if attempt == 0:
+                print(f"   (model ran out of tokens while thinking; retrying with max_tokens={max_tokens * 3})")
+                max_tokens *= 3
+        if not text.strip() and choice.finish_reason == "length":
+            print("   warning: model gave no answer within max_tokens; raise lmstudio.max_tokens in config.yaml")
         # Reasoning models (e.g. Qwen3) may emit <think>...</think>; drop it.
         return re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
 

@@ -2,10 +2,10 @@
 lmstudio:
   base_url: http://localhost:1234/v1
   api_key: lm-studio            # any string works
-  chat_model: qwen3-8b          # must match the model identifier shown in LM Studio
+  chat_model: ornith-1.0-9b          # must match the model identifier shown in LM Studio
   embed_model: text-embedding-nomic-embed-text-v1.5
   temperature: 0.2
-  max_tokens: 2048
+  max_tokens: 8192              # reasoning models think before answering: keep this generous
   # Optional stronger model used only by the verifier (e.g. a 14B with partial GPU offload).
   verifier_model: null
 

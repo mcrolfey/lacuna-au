@@ -61,7 +61,13 @@ def plan_questions(llm: LMStudio, topic: str, n: int) -> list[str]:
         f"Topic: {topic.replace('_', ' ')}.\nWrite {n} specific research questions that would "
         "reveal conflicts between Constitution, federal and state law, loopholes, or problems "
         "revealed by case law, or tensions between the common law and statute. Return a JSON list of strings.")
-    return [q for q in (out or []) if isinstance(q, str)][:n] or [f"Problems with {topic} law"]
+    if isinstance(out, dict):  # {"questions": [...]}
+        out = next((v for v in out.values() if isinstance(v, list)), [])
+    questions = [q for q in (out if isinstance(out, list) else []) if isinstance(q, str)][:n]
+    if not questions:
+        print("warning: the planner returned no questions; using one generic question. "
+              "Add your own under analysis.questions in config.yaml, or raise lmstudio.max_tokens.")
+    return questions or [f"Problems with {topic} law"]
 
 
 def run_agent(cfg: dict, llm: LMStudio, name: str, question: str) -> list[dict]:
