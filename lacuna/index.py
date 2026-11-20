@@ -33,7 +33,9 @@ def collection(cfg: dict):
 
 
 def build_index(cfg: dict, llm: LMStudio, batch: int = 32) -> None:
-    src = Path(cfg["paths"]["data_dir"]) / f"{cfg['topic']['name']}_docs.jsonl"
+    data_dir, topic = Path(cfg["paths"]["data_dir"]), cfg["topic"]["name"]
+    sources = [p for p in (data_dir / f"{topic}_docs.jsonl", data_dir / f"{topic}_local.jsonl")
+               if p.exists()]
     col = collection(cfg)
     ck = cfg["chunking"]
     ids, docs, metas = [], [], []
@@ -44,7 +46,8 @@ def build_index(cfg: dict, llm: LMStudio, batch: int = 32) -> None:
                        embeddings=llm.embed(docs))
             ids.clear(); docs.clear(); metas.clear()
 
-    for line in tqdm(src.open(encoding="utf-8"), desc="indexing"):
+    lines = (line for src in sources for line in src.open(encoding="utf-8"))
+    for line in tqdm(lines, desc="indexing"):
         d = json.loads(line)
         for i, piece in enumerate(chunk(d["text"], ck["chunk_chars"], ck["overlap_chars"])):
             ids.append(f"{d['id']}::{i}")

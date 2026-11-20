@@ -1,0 +1,23 @@
+# Copy this file to local_laws.yaml and list the councils you want included.
+# Then run:  python -m lacuna.cli local   (and `index` again afterwards)
+#
+# For each council, give links to its local laws (PDF or web page) and/or a folder of
+# files you downloaded yourself (.pdf, .html, .txt). Find them on the council's website,
+# usually under "Local laws", "By-laws", or "Policies and plans".
+#
+# State values should match the corpus jurisdictions: new_south_wales, victoria,
+# queensland, western_australia, south_australia, tasmania, ...
+# Note: NSW councils mostly do not make "local laws" - their parking rules come from the
+# NSW Road Rules and council policies/orders, which you can add here the same way.
+# Queensland, Victoria, WA and SA councils do make local laws.
+
+councils:
+  - name: Example City Council
+    state: queensland
+    sources:
+      - url: https://www.example.qld.gov.au/path/to/local-law-no-5-parking.pdf
+        title: Local Law No. 5 (Parking) 2020
+      - url: https://www.example.qld.gov.au/path/to/subordinate-local-law-5.pdf
+        title: Subordinate Local Law No. 5 (Parking) 2020
+    # Optional: a folder of files you downloaded by hand
+    folder: data/local_laws/example_city

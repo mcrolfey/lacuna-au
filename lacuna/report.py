@@ -8,7 +8,8 @@ ORDER = {"high": 0, "medium": 1, "low": 2}
 TITLES = {"conflict": "Conflicts between levels of law",
           "loophole": "Areas open to gaming",
           "precedent": "Problems exposed by case law",
-          "common_law": "Common law vs statute"}
+          "common_law": "Common law vs statute",
+          "local_law": "Council local laws"}
 
 
 def write_report(cfg: dict, findings: list[dict]) -> Path:

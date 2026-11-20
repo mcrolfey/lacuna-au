@@ -7,12 +7,13 @@ from .config import load_config
 from .index import build_index
 from .ingest import ingest, refilter
 from .llm import LMStudio
+from .local_laws import collect_local_laws
 from .report import write_report
 
 
 def main():
     p = argparse.ArgumentParser(prog="lacuna")
-    p.add_argument("command", choices=["check", "ingest", "refilter", "index", "analyse", "report", "all"])
+    p.add_argument("command", choices=["check", "ingest", "refilter", "local", "index", "analyse", "report", "all"])
     p.add_argument("--config", default="config.yaml")
     p.add_argument("-q", "--question", action="append",
                    help="your own research question (repeatable); skips the planner")
@@ -20,6 +21,9 @@ def main():
     args = p.parse_args()
 
     cfg = load_config(args.config)
+    if args.command == "local":  # no LLM needed
+        collect_local_laws(cfg)
+        return
     if args.command == "report":  # rebuild md + pdf from saved findings, no LLM needed
         src = Path(cfg["paths"]["report_dir"]) / f"{cfg['topic']['name']}_findings.json"
         print("report:", write_report(cfg, json.loads(src.read_text(encoding="utf-8"))))
@@ -37,6 +41,8 @@ def main():
         ingest(cfg)
     if args.command == "refilter":
         refilter(cfg)
+    if args.command == "all" and Path("local_laws.yaml").exists():
+        collect_local_laws(cfg)
     if args.command in ("index", "all"):
         build_index(cfg, llm)
     if args.command in ("analyse", "all"):

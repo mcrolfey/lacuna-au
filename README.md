@@ -7,6 +7,7 @@ State law and case law on one topic, then uses local AI agents to find:
 - **Loopholes**, meaning ways the law can be gamed or avoided
 - **Problems shown up by case law**, such as provisions read down, conflicting
   interpretations, or criticism from judges
+- **Council local laws** that exceed their power or clash with State law (see below)
 - **Common law vs statute**: judge-made rules that legislation overrides, codifies badly or
   leaves uncertain, conflicting lines of cases between States, and doctrines that can be
   used to avoid a statutory duty
@@ -26,7 +27,7 @@ Open Australian Legal Corpus ──ingest──> topic documents (jsonl)
                                    ▼
                           Chroma vector index
                                    │
-   planner ─> questions ─> conflict / loophole / precedent / common_law agents ─> verifier
+   planner ─> questions ─> conflict / loophole / precedent / common_law / local_law agents ─> verifier
                                                                        ▼
                                                          reports/<topic>_report.md
 ```
@@ -69,6 +70,19 @@ Ask your own questions instead of letting the planner choose (or list them under
 python -m lacuna.cli analyse -q "How can landlords avoid the no-grounds eviction rules?" -q "Does the NSW bond scheme conflict with Commonwealth law?"
 ```
 
+## Council local laws
+
+Council laws are not in the main corpus, so you list the ones you want:
+
+1. Copy `local_laws.example.yaml` to `local_laws.yaml`.
+2. For each council, add links to its local-law PDFs or pages, and/or a folder of files you
+   downloaded yourself.
+3. Run `python -m lacuna.cli local`, then `python -m lacuna.cli index`.
+
+The `local_law` agent then tests each council law against the State Acts that empower it
+(beyond power, inconsistency, unreasonableness) and compares councils with each other.
+Scanned PDFs with no text layer are skipped with a warning (OCR is not supported yet).
+
 ## Choosing a topic
 
 Edit the `topic` and `corpus.jurisdictions` sections of `config.yaml`. Jurisdiction values
@@ -82,11 +96,12 @@ Start small: one topic, Commonwealth plus one State.
   still needs to check every finding.
 - For better quality, set `verifier_model` to a larger model (e.g. Qwen3 14B Q4 with
   partial GPU offload). It's slower but more sceptical.
-- Not covered yet: local council laws, and states missing from the corpus.
+- Council laws must be listed by hand in `local_laws.yaml`.
 
 ## Roadmap
 
 - [ ] Direct fetchers for legislation.gov.au and the state legislation sites (current versions)
-- [ ] Council local-law PDF ingestion
+- [x] Council local-law ingestion (manual list)
+- [ ] OCR for scanned council PDFs
 - [ ] Pairwise provision comparison for s 109 analysis
 - [ ] Optional QLoRA fine-tune on verified findings

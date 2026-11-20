@@ -50,7 +50,20 @@ AGENTS = {
             "exploited to avoid a statutory obligation. State the principle and the case "
             "it comes from for every claim."),
         # Half court decisions (where the common law lives), half legislation to compare it with.
-        "filter": "mixed",
+        "filter": [{"type": "decision"}, {"type": {"$nin": ["decision", "local_law"]}}],
+    },
+    "local_law": {
+        "role": BASE + (
+            "Test council local laws against the State Acts that empower them and against "
+            "other State and Commonwealth law. Identify: local laws that go beyond the power "
+            "given by the empowering Act (ultra vires); provisions inconsistent with State "
+            "law or the Road Rules; uncertainty or unreasonableness that could make a local "
+            "law invalid under the common law tests for delegated legislation; councils "
+            "imposing different or conflicting rules for the same conduct; and gaps or "
+            "weak enforcement that let people avoid the rule by moving across a council "
+            "boundary. Name the council, the local law and the State provision for every claim."),
+        # Half council local laws, half State/Commonwealth legislation and cases.
+        "filter": [{"type": "local_law"}, {"type": {"$ne": "local_law"}}],
     },
 }
 
@@ -60,7 +73,7 @@ def plan_questions(llm: LMStudio, topic: str, n: int) -> list[str]:
         "You design research agendas for Australian law reform.",
         f"Topic: {topic.replace('_', ' ')}.\nWrite {n} specific research questions that would "
         "reveal conflicts between Constitution, federal and state law, loopholes, or problems "
-        "revealed by case law, or tensions between the common law and statute. Return a JSON list of strings.")
+        "revealed by case law, tensions between the common law and statute, or problems with council local laws. Return a JSON list of strings.")
     if isinstance(out, dict):  # {"questions": [...]}
         out = next((v for v in out.values() if isinstance(v, list)), [])
     questions = [q for q in (out if isinstance(out, list) else []) if isinstance(q, str)][:n]
@@ -73,9 +86,11 @@ def plan_questions(llm: LMStudio, topic: str, n: int) -> list[str]:
 def run_agent(cfg: dict, llm: LMStudio, name: str, question: str) -> list[dict]:
     spec = AGENTS[name]
     k = cfg["analysis"]["retrieve_k"]
-    if spec["filter"] == "mixed":
-        chunks = (retrieve(cfg, llm, question, (k + 1) // 2, {"type": "decision"})
-                  + retrieve(cfg, llm, question, k // 2, {"type": {"$ne": "decision"}}))
+    if isinstance(spec["filter"], list):  # split k between several filters
+        n = len(spec["filter"])
+        chunks = []
+        for i, where in enumerate(spec["filter"]):
+            chunks += retrieve(cfg, llm, question, k // n + (i < k % n), where)
     else:
         chunks = retrieve(cfg, llm, question, k, spec["filter"])
     if not chunks:
